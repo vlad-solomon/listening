@@ -52,21 +52,29 @@ async function getRecentTrack() {
     }
 }
 
+function centerText(text, maxWidth = 46) {
+    if (text.length > maxWidth) {
+        text = text.substring(0, 43) + "...";
+    }
+    const padding = Math.floor((maxWidth - text.length) / 2);
+    const leftPad = " ".repeat(padding);
+    const rightPad = " ".repeat(maxWidth - text.length - padding);
+    return leftPad + text + rightPad;
+}
+
 async function updateGist(trackData) {
     try {
         const status = trackData.live ? "listening to" : "last listened to";
-        const title =
-            trackData.title.length > 50
-                ? trackData.title.substring(0, 47) + "..."
-                : trackData.title;
         const artist = `by ${trackData.artist}`;
-        const artistLine =
-            artist.length > 50 ? artist.substring(0, 47) + "..." : artist;
+
+        const centeredStatus = centerText(status);
+        const centeredTitle = centerText(trackData.title);
+        const centeredArtist = centerText(artist);
 
         const content = `
-${status}
-${title}
-${artistLine}
+${centeredStatus}
+${centeredTitle}
+${centeredArtist}
 \n
 `;
 
