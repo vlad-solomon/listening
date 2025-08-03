@@ -65,19 +65,25 @@ function wrapTitle(title, maxWidth = 50) {
     if (title.length <= maxWidth) {
         return [centerText(title, maxWidth)];
     }
-    
+
     const words = title.split(" ");
     const targetLength = Math.ceil(title.length / 2);
-    
+
     let firstLine = "";
     let secondLine = "";
-    
+
     for (let i = 0; i < words.length; i++) {
         const testFirstLine = (firstLine + " " + words[i]).trim();
         const remainingWords = words.slice(i + 1).join(" ");
-        
-        if (testFirstLine.length <= maxWidth && remainingWords.length <= maxWidth) {
-            if (testFirstLine.length <= remainingWords.length || testFirstLine.length <= targetLength) {
+
+        if (
+            testFirstLine.length <= maxWidth &&
+            remainingWords.length <= maxWidth
+        ) {
+            if (
+                testFirstLine.length <= remainingWords.length ||
+                testFirstLine.length <= targetLength
+            ) {
                 firstLine = testFirstLine;
                 secondLine = remainingWords;
             } else {
@@ -89,11 +95,11 @@ function wrapTitle(title, maxWidth = 50) {
             break;
         }
     }
-    
+
     if (!secondLine) {
         secondLine = words.slice(firstLine.split(" ").length).join(" ");
     }
-    
+
     return [centerText(firstLine, maxWidth), centerText(secondLine, maxWidth)];
 }
 
@@ -108,8 +114,9 @@ async function updateGist(trackData) {
 
         const content = `
 ${centeredStatus}
-${wrappedTitle.join('\n')}
+${wrappedTitle.join("\n")}
 ${centeredArtist}
+
 
 `;
 
