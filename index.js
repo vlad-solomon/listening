@@ -5,7 +5,7 @@ dotenv.config();
 
 const LASTFM_API_KEY = process.env.LASTFM_API_KEY;
 const LASTFM_RECENT_URL = `http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=vladsolomon&api_key=${LASTFM_API_KEY}&limit=1&page=1&format=json`;
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_TOKEN = process.env.GH_TOKEN;
 const GIST_ID = process.env.GIST_ID;
 
 const octokit = new Octokit({
