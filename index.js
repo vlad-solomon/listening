@@ -123,7 +123,7 @@ ${centeredArtist}
         const response = await octokit.rest.gists.update({
             gist_id: GIST_ID,
             files: {
-                "music.js": {
+                "listening.js": {
                     content: content,
                 },
             },
