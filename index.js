@@ -54,13 +54,21 @@ async function getRecentTrack() {
 
 async function updateGist(trackData) {
     try {
-        const content = `Now ${trackData.live ? "Playing" : "Played"}: ${
-            trackData.artist
-        } - ${trackData.title}
-        
-${trackData.url ? `Listen: ${trackData.url}` : ""}
+        const status = trackData.live ? "listening to" : "last listened to";
+        const title =
+            trackData.title.length > 50
+                ? trackData.title.substring(0, 47) + "..."
+                : trackData.title;
+        const artist = `by ${trackData.artist}`;
+        const artistLine =
+            artist.length > 50 ? artist.substring(0, 47) + "..." : artist;
 
-Last updated: ${new Date().toISOString()}`;
+        const content = `
+${status}
+${title}
+${artistLine}
+\n
+`;
 
         const response = await octokit.rest.gists.update({
             gist_id: GIST_ID,
