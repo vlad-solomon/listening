@@ -4,6 +4,8 @@ on:
   schedule:
     - cron: '*/10 * * * *'  # Runs every 10 minutes
   workflow_dispatch:  # Allows manual triggering
+  push:
+    branches: [ master ]  # Ensure it works on master branch
 
 jobs:
   update-gist:
