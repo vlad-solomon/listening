@@ -52,14 +52,42 @@ async function getRecentTrack() {
     }
 }
 
-function centerText(text, maxWidth = 46) {
-    if (text.length > maxWidth) {
-        text = text.substring(0, 43) + "...";
-    }
-    const padding = Math.floor((maxWidth - text.length) / 2);
-    const leftPad = " ".repeat(padding);
-    const rightPad = " ".repeat(maxWidth - text.length - padding);
+function centerText(text, maxWidth = 50) {
+    const totalPadding = maxWidth - text.length;
+    const rightPadding = Math.floor(totalPadding / 2);
+    const leftPadding = totalPadding - rightPadding;
+    const leftPad = " ".repeat(leftPadding);
+    const rightPad = " ".repeat(rightPadding);
     return leftPad + text + rightPad;
+}
+
+function wrapTitle(title, maxWidth = 50) {
+    if (title.length <= maxWidth) {
+        return [centerText(title, maxWidth)];
+    }
+    
+    const lines = [];
+    let currentLine = "";
+    const words = title.split(" ");
+    
+    for (const word of words) {
+        if ((currentLine + " " + word).trim().length <= maxWidth) {
+            currentLine = (currentLine + " " + word).trim();
+        } else {
+            if (currentLine) {
+                lines.push(centerText(currentLine, maxWidth));
+                currentLine = word;
+            } else {
+                lines.push(centerText(word.substring(0, maxWidth), maxWidth));
+            }
+        }
+    }
+    
+    if (currentLine) {
+        lines.push(centerText(currentLine, maxWidth));
+    }
+    
+    return lines;
 }
 
 async function updateGist(trackData) {
@@ -68,12 +96,12 @@ async function updateGist(trackData) {
         const artist = `by ${trackData.artist}`;
 
         const centeredStatus = centerText(status);
-        const centeredTitle = centerText(trackData.title);
+        const wrappedTitle = wrapTitle(trackData.title);
         const centeredArtist = centerText(artist);
 
         const content = `
 ${centeredStatus}
-${centeredTitle}
+${wrappedTitle.join('\n')}
 ${centeredArtist}
 \n
 `;
