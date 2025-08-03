@@ -66,28 +66,35 @@ function wrapTitle(title, maxWidth = 50) {
         return [centerText(title, maxWidth)];
     }
     
-    const lines = [];
-    let currentLine = "";
     const words = title.split(" ");
+    const targetLength = Math.ceil(title.length / 2);
     
-    for (const word of words) {
-        if ((currentLine + " " + word).trim().length <= maxWidth) {
-            currentLine = (currentLine + " " + word).trim();
-        } else {
-            if (currentLine) {
-                lines.push(centerText(currentLine, maxWidth));
-                currentLine = word;
+    let firstLine = "";
+    let secondLine = "";
+    
+    for (let i = 0; i < words.length; i++) {
+        const testFirstLine = (firstLine + " " + words[i]).trim();
+        const remainingWords = words.slice(i + 1).join(" ");
+        
+        if (testFirstLine.length <= maxWidth && remainingWords.length <= maxWidth) {
+            if (testFirstLine.length <= remainingWords.length || testFirstLine.length <= targetLength) {
+                firstLine = testFirstLine;
+                secondLine = remainingWords;
             } else {
-                lines.push(centerText(word.substring(0, maxWidth), maxWidth));
+                break;
             }
+        } else if (testFirstLine.length <= maxWidth) {
+            firstLine = testFirstLine;
+        } else {
+            break;
         }
     }
     
-    if (currentLine) {
-        lines.push(centerText(currentLine, maxWidth));
+    if (!secondLine) {
+        secondLine = words.slice(firstLine.split(" ").length).join(" ");
     }
     
-    return lines;
+    return [centerText(firstLine, maxWidth), centerText(secondLine, maxWidth)];
 }
 
 async function updateGist(trackData) {
@@ -103,7 +110,7 @@ async function updateGist(trackData) {
 ${centeredStatus}
 ${wrappedTitle.join('\n')}
 ${centeredArtist}
-\n
+
 `;
 
         const response = await octokit.rest.gists.update({
