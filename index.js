@@ -1,21 +1,94 @@
 import dotenv from "dotenv";
+import { Octokit } from "@octokit/rest";
 
 dotenv.config();
 
 const LASTFM_API_KEY = process.env.LASTFM_API_KEY;
 const LASTFM_RECENT_URL = `http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=vladsolomon&api_key=${LASTFM_API_KEY}&limit=1&page=1&format=json`;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GIST_ID = process.env.GIST_ID;
+
+const octokit = new Octokit({
+    auth: GITHUB_TOKEN,
+});
 
 async function getRecentTrack() {
-    const response = await fetch(LASTFM_RECENT_URL);
-    const data = await response.json();
-    const recentTrack = data.recenttracks.track[0];
-    return {
-        title: recentTrack.name,
-        artist: recentTrack.artist["#text"],
-        url: recentTrack.url,
-        live: recentTrack["@attr"]?.nowplaying === "true" ? true : false,
-    };
+    try {
+        const response = await fetch(LASTFM_RECENT_URL);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (
+            !data.recenttracks ||
+            !data.recenttracks.track ||
+            data.recenttracks.track.length === 0
+        ) {
+            throw new Error("No recent tracks found in API response");
+        }
+
+        const recentTrack = data.recenttracks.track[0];
+
+        if (
+            !recentTrack.name ||
+            !recentTrack.artist ||
+            !recentTrack.artist["#text"]
+        ) {
+            throw new Error("Invalid track data in API response");
+        }
+
+        return {
+            title: recentTrack.name,
+            artist: recentTrack.artist["#text"],
+            url: recentTrack.url,
+            live: recentTrack["@attr"]?.nowplaying === "true" ? true : false,
+        };
+    } catch (error) {
+        console.error("Error fetching recent track:", error.message);
+        return null;
+    }
+}
+
+async function updateGist(trackData) {
+    try {
+        const content = `Now ${trackData.live ? "Playing" : "Played"}: ${
+            trackData.artist
+        } - ${trackData.title}
+        
+${trackData.url ? `Listen: ${trackData.url}` : ""}
+
+Last updated: ${new Date().toISOString()}`;
+
+        const response = await octokit.rest.gists.update({
+            gist_id: GIST_ID,
+            files: {
+                "music.js": {
+                    content: content,
+                },
+            },
+        });
+
+        console.log(`Gist updated successfully: ${response.data.html_url}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error updating gist:", error.message);
+        return null;
+    }
 }
 
 const recentTrack = await getRecentTrack();
-console.log(recentTrack);
+
+if (recentTrack) {
+    console.log(recentTrack);
+    const gist = await updateGist(recentTrack);
+    if (gist) {
+        console.log("Successfully updated now playing status");
+    }
+} else {
+    console.log(
+        "Failed to fetch recent track, skipping gist update to prevent overwriting"
+    );
+}
