@@ -103,28 +103,60 @@ function wrapTitle(title, maxWidth = 50) {
     return [centerText(firstLine, maxWidth), centerText(secondLine, maxWidth)];
 }
 
-async function updateGist(trackData) {
+async function getCurrentGistContent() {
     try {
-        const status = trackData.live ? "listening to" : "last listened to";
-        const artist = `by ${trackData.artist}`;
+        const response = await octokit.rest.gists.get({
+            gist_id: GIST_ID,
+        });
 
-        const centeredStatus = centerText(status);
-        const wrappedTitle = wrapTitle(trackData.title);
-        const centeredArtist = centerText(artist);
+        return response.data.files["listening.js"]?.content || "";
+    } catch (error) {
+        console.error("Error fetching current gist:", error.message);
+        return null;
+    }
+}
 
-        const content = `
+function generateContent(trackData) {
+    const status = trackData.live ? "listening to" : "last listened to";
+    const artist = `by ${trackData.artist}`;
+
+    const centeredStatus = centerText(status);
+    const wrappedTitle = wrapTitle(trackData.title);
+    const centeredArtist = centerText(artist);
+
+    return `
 ${centeredStatus}
 ${wrappedTitle.join("\n")}
 ${centeredArtist}
 
 
 `;
+}
+
+async function updateGist(trackData) {
+    try {
+        const currentContent = await getCurrentGistContent();
+
+        if (currentContent === null) {
+            console.log(
+                "Failed to fetch current gist content, skipping update"
+            );
+            return null;
+        }
+
+        const newContent = generateContent(trackData);
+
+        // Compare content - if they're the same, don't update
+        if (currentContent === newContent) {
+            console.log("Content unchanged, skipping gist update");
+            return { unchanged: true };
+        }
 
         const response = await octokit.rest.gists.update({
             gist_id: GIST_ID,
             files: {
                 "listening.js": {
-                    content: content,
+                    content: newContent,
                 },
             },
         });
@@ -143,7 +175,11 @@ if (recentTrack) {
     console.log(recentTrack);
     const gist = await updateGist(recentTrack);
     if (gist) {
-        console.log("Successfully updated now playing status");
+        if (gist.unchanged) {
+            console.log("No update needed - content is the same");
+        } else {
+            console.log("Successfully updated now playing status");
+        }
     }
 } else {
     console.log(
